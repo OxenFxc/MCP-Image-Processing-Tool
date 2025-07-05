@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "image-processor": {
+      "command": "python",
+      "args": ["mcp_image_server.py"],
+      "env": {}
+    }
+  }
+} 
