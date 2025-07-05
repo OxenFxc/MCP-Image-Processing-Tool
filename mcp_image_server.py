@@ -7,6 +7,7 @@ MCP图片处理工具服务器
 import asyncio
 import json
 import sys
+import os
 from typing import Any, Dict, List
 from mcp.server.models import InitializationOptions
 import mcp.types as types
@@ -166,6 +167,43 @@ async def handle_list_tools() -> List[types.Tool]:
                     }
                 },
                 "required": []
+            },
+        ),
+        types.Tool(
+            name="file_to_array",
+            description="从文件路径读取图片并转换为3D数组",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "图片文件的路径（支持相对路径和绝对路径）"
+                    }
+                },
+                "required": ["file_path"]
+            },
+        ),
+        types.Tool(
+            name="save_base64_to_file",
+            description="将base64编码的图片保存为文件",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "image_base64": {
+                        "type": "string",
+                        "description": "base64编码的图片字符串"
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "description": "保存的文件路径（支持相对路径和绝对路径）"
+                    },
+                    "format": {
+                        "type": "string",
+                        "description": "图片格式（可选，如果不指定则从文件扩展名推断）",
+                        "default": None
+                    }
+                },
+                "required": ["image_base64", "file_path"]
             },
         ),
     ]
@@ -338,6 +376,46 @@ async def handle_call_tool(
                          f"图案: {pattern}\n"
                          f"数组形状: {array.shape}\n"
                          f"数组数据: {json.dumps(result, indent=2)}"
+                )
+            ]
+            
+        elif name == "file_to_array":
+            file_path = arguments["file_path"]
+            
+            # 处理路径
+            if not os.path.isabs(file_path):
+                file_path = os.path.abspath(file_path)
+            
+            result = image_processor.file_to_array(file_path)
+            
+            # 获取数组信息
+            import numpy as np
+            np_array = np.array(result)
+            
+            return [
+                types.TextContent(
+                    type="text",
+                    text=f"成功从文件读取并转换为数组。\n"
+                         f"文件路径: {file_path}\n"
+                         f"数组形状: {np_array.shape}\n"
+                         f"数值范围: {np_array.min()} - {np_array.max()}\n"
+                         f"数组数据: {json.dumps(result, indent=2)}"
+                )
+            ]
+            
+        elif name == "save_base64_to_file":
+            image_base64 = arguments["image_base64"]
+            file_path = arguments["file_path"]
+            format = arguments.get("format")
+            
+            # 保存文件
+            saved_path = image_processor.save_base64_to_file(image_base64, file_path, format)
+            
+            return [
+                types.TextContent(
+                    type="text",
+                    text=f"成功保存图片文件。\n"
+                         f"保存路径: {saved_path}"
                 )
             ]
             

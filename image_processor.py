@@ -5,6 +5,7 @@ import io
 import json
 from typing import List, Dict, Any, Tuple, Optional
 import math
+import os
 
 class ImageProcessor:
     """处理图片和数组之间的转换，支持分卷处理"""
@@ -225,4 +226,64 @@ class ImageProcessor:
                 "size_bytes": len(image_data)
             }
         except Exception as e:
-            raise Exception(f"获取图片信息失败: {str(e)}") 
+            raise Exception(f"获取图片信息失败: {str(e)}")
+    
+    def file_to_array(self, file_path: str) -> List[List[List[int]]]:
+        """
+        从文件路径读取图片并转换为3D数组
+        
+        Args:
+            file_path: 图片文件路径
+            
+        Returns:
+            3D数组 [height, width, channels]
+        """
+        try:
+            # 读取图片文件
+            with open(file_path, 'rb') as f:
+                image_data = f.read()
+            
+            # 转换为base64
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+            
+            # 使用现有方法转换为数组
+            return self.image_to_array(image_base64)
+            
+        except Exception as e:
+            raise Exception(f"文件转数组失败: {str(e)}")
+    
+    def save_base64_to_file(self, image_base64: str, file_path: str, format: str = None) -> str:
+        """
+        将base64编码的图片保存为文件
+        
+        Args:
+            image_base64: base64编码的图片字符串
+            file_path: 保存的文件路径
+            format: 图片格式（可选，如果不指定则从文件扩展名推断）
+            
+        Returns:
+            保存的文件的绝对路径
+        """
+        try:
+            # 解码base64
+            image_data = base64.b64decode(image_base64)
+            
+            # 创建PIL图片对象
+            image = Image.open(io.BytesIO(image_data))
+            
+            # 如果没有指定格式，从文件扩展名推断
+            if format is None:
+                format = os.path.splitext(file_path)[1].lstrip('.')
+                if not format:
+                    format = 'PNG'  # 默认使用PNG
+            
+            # 确保目标目录存在
+            os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
+            
+            # 保存图片
+            image.save(file_path, format=format.upper())
+            
+            return os.path.abspath(file_path)
+            
+        except Exception as e:
+            raise Exception(f"保存图片文件失败: {str(e)}") 

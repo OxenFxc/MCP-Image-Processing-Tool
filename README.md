@@ -90,6 +90,20 @@ Create example array for testing
 - `pattern`: Pattern type (gradient, checkerboard, solid, random), default gradient
 - `channels`: Number of channels (1=grayscale, 3=RGB, 4=RGBA), default 3
 
+#### `file_to_array`
+Read image file and convert to 3D array
+
+**Parameters**:
+- `file_path`: Path to the image file (supports both relative and absolute paths)
+
+#### `save_base64_to_file`
+Save base64 encoded image to file
+
+**Parameters**:
+- `image_base64`: Base64 encoded image string
+- `file_path`: Path to save the image file (supports both relative and absolute paths)
+- `format`: Image format (optional, will be inferred from file extension if not specified)
+
 ### Use Cases
 
 1. Basic Image Processing
@@ -261,6 +275,20 @@ python test_example.py
 - `height`: 图片高度，默认100
 - `pattern`: 图案类型 (gradient, checkerboard, solid, random)，默认gradient
 - `channels`: 通道数 (1=灰度, 3=RGB, 4=RGBA)，默认3
+
+#### `file_to_array`
+读取图片文件并转换为3D数组
+
+**参数**:
+- `file_path`: 图片文件的路径（支持相对路径和绝对路径）
+
+#### `save_base64_to_file`
+将base64编码的图片保存为文件
+
+**参数**:
+- `image_base64`: base64编码的图片字符串
+- `file_path`: 保存的文件路径（支持相对路径和绝对路径）
+- `format`: 图片格式（可选，如果不指定则从文件扩展名推断）
 
 ### 使用场景
 
