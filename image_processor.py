@@ -79,13 +79,22 @@ class ImageProcessor:
             # 创建PIL图片
             image = Image.open(io.BytesIO(image_data))
             
-            # 转换为numpy数组
-            np_array = np.array(image)
+            # 确保图片模式正确
+            if image.mode not in ['L', 'RGB', 'RGBA']:
+                # 转换其他模式到RGB
+                image = image.convert('RGB')
+            
+            # 转换为numpy数组并确保类型为uint8
+            np_array = np.array(image, dtype=np.uint8)
             
             # 确保是3D数组
             if len(np_array.shape) == 2:
                 # 灰度图，添加通道维度
                 np_array = np.expand_dims(np_array, axis=2)
+            
+            # 验证数值范围
+            if np_array.min() < 0 or np_array.max() > 255:
+                raise ValueError("图片数组值必须在0-255范围内")
             
             # 转换为Python列表
             return np_array.tolist()
@@ -286,4 +295,132 @@ class ImageProcessor:
             return os.path.abspath(file_path)
             
         except Exception as e:
-            raise Exception(f"保存图片文件失败: {str(e)}") 
+            raise Exception(f"保存图片文件失败: {str(e)}")
+    
+    def save_array_to_file(self, array_data: List[List[List[int]]], file_path: str, format: str = "PNG") -> str:
+        """
+        将3D数组保存为图片文件
+        
+        Args:
+            array_data: 3D数组 [height, width, channels]
+            file_path: 保存的文件路径
+            format: 图片格式（默认PNG）
+            
+        Returns:
+            保存的文件的绝对路径
+        """
+        try:
+            # 转换为numpy数组并确保类型为uint8
+            np_array = np.array(array_data, dtype=np.uint8)
+            
+            # 检查数组维度
+            if len(np_array.shape) == 2:
+                mode = 'L'
+            elif len(np_array.shape) == 3:
+                if np_array.shape[2] == 1:
+                    np_array = np_array.squeeze(axis=2)
+                    mode = 'L'
+                elif np_array.shape[2] == 3:
+                    mode = 'RGB'
+                elif np_array.shape[2] == 4:
+                    mode = 'RGBA'
+                else:
+                    raise ValueError(f"不支持的通道数: {np_array.shape[2]}")
+            else:
+                raise ValueError(f"不支持的数组维度: {np_array.shape}")
+            
+            # 验证数值范围
+            if np_array.min() < 0 or np_array.max() > 255:
+                raise ValueError("图片数组值必须在0-255范围内")
+            
+            # 创建PIL图片
+            image = Image.fromarray(np_array, mode=mode)
+            
+            # 确保目标目录存在
+            os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
+            
+            # 保存图片
+            image.save(file_path, format=format)
+            
+            return os.path.abspath(file_path)
+            
+        except Exception as e:
+            raise Exception(f"保存数组到文件失败: {str(e)}")
+    
+    def save_array(self, array_data: List[List[List[int]]], file_path: str, format: str = "npy") -> str:
+        """
+        直接保存数组数据到文件
+        
+        Args:
+            array_data: 3D数组 [height, width, channels]
+            file_path: 保存的文件路径
+            format: 保存格式，支持 "npy"（numpy格式）或 "json"
+            
+        Returns:
+            保存的文件的绝对路径
+        """
+        try:
+            # 转换为numpy数组
+            np_array = np.array(array_data, dtype=np.uint8)
+            
+            # 确保目标目录存在
+            os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
+            
+            if format.lower() == "npy":
+                # 如果没有.npy后缀，添加它
+                if not file_path.lower().endswith('.npy'):
+                    file_path += '.npy'
+                # 保存为numpy格式
+                np.save(file_path, np_array)
+            elif format.lower() == "json":
+                # 如果没有.json后缀，添加它
+                if not file_path.lower().endswith('.json'):
+                    file_path += '.json'
+                # 保存为JSON格式
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        'shape': np_array.shape,
+                        'data': np_array.tolist()
+                    }, f, ensure_ascii=False, indent=2)
+            else:
+                raise ValueError(f"不支持的保存格式: {format}")
+            
+            return os.path.abspath(file_path)
+            
+        except Exception as e:
+            raise Exception(f"保存数组数据失败: {str(e)}")
+    
+    def load_array(self, file_path: str) -> List[List[List[int]]]:
+        """
+        从文件加载数组数据
+        
+        Args:
+            file_path: 数组数据文件路径
+            
+        Returns:
+            3D数组 [height, width, channels]
+        """
+        try:
+            if file_path.lower().endswith('.npy'):
+                # 从numpy格式加载
+                np_array = np.load(file_path)
+            elif file_path.lower().endswith('.json'):
+                # 从JSON格式加载
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    np_array = np.array(data['data'], dtype=np.uint8)
+            else:
+                raise ValueError(f"不支持的文件格式: {file_path}")
+            
+            # 验证数组
+            if not (2 <= len(np_array.shape) <= 3):
+                raise ValueError(f"不支持的数组维度: {np_array.shape}")
+            
+            # 确保是3D数组
+            if len(np_array.shape) == 2:
+                np_array = np.expand_dims(np_array, axis=2)
+            
+            return np_array.tolist()
+            
+        except Exception as e:
+            raise Exception(f"加载数组数据失败: {str(e)}") 

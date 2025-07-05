@@ -104,6 +104,46 @@ Save base64 encoded image to file
 - `file_path`: Path to save the image file (supports both relative and absolute paths)
 - `format`: Image format (optional, will be inferred from file extension if not specified)
 
+#### `save_array_to_file`
+Save base64 encoded image to file
+
+**Parameters**:
+- `image_base64`: Base64 encoded image string
+- `file_path`: Path to save the image file (supports both relative and absolute paths)
+- `format`: Image format (optional, will be inferred from file extension if not specified)
+
+#### `save_array`
+Save array data directly to file
+
+**Parameters**:
+- `array_data`: 3D array [height, width, channels]
+- `file_path`: Path to save the array file
+- `format`: Save format ("npy" or "json"), default "npy"
+
+**Example**:
+```python
+# Save array data
+array_data = processor.image_to_array(image_base4)
+# Save as numpy format (more efficient)
+processor.save_array(array_data, "output/data.npy")
+# Or save as JSON format (human readable)
+processor.save_array(array_data, "output/data.json", format="json")
+```
+
+#### `load_array`
+Load array data from file
+
+**Parameters**:
+- `file_path`: Path to the array data file (.npy or .json)
+
+**Example**:
+```python
+# Load from numpy format
+array_data = processor.load_array("output/data.npy")
+# Or load from JSON format
+array_data = processor.load_array("output/data.json")
+```
+
 ### Use Cases
 
 1. Basic Image Processing
@@ -128,6 +168,21 @@ large_array = create_large_image_array()
 ```python
 # Get detailed image information
 # Use get_image_info tool to view width, height, format etc.
+```
+
+4. Array Data Storage
+```python
+# Convert image to array and save
+array_data = processor.image_to_array(image_base64)
+# Save as numpy format for efficiency
+processor.save_array(array_data, "arrays/image_data.npy")
+# Or save as JSON for readability
+processor.save_array(array_data, "arrays/image_data.json", format="json")
+
+# Load array data later
+array_data = processor.load_array("arrays/image_data.npy")
+# Process or convert back to image
+image_base64 = processor.array_to_image(array_data)
 ```
 
 ### Configuration
@@ -290,6 +345,46 @@ python test_example.py
 - `file_path`: 保存的文件路径（支持相对路径和绝对路径）
 - `format`: 图片格式（可选，如果不指定则从文件扩展名推断）
 
+#### `save_array_to_file`
+将base64编码的图片保存为文件
+
+**参数**:
+- `image_base64`: base64编码的图片字符串
+- `file_path`: 保存的文件路径（支持相对路径和绝对路径）
+- `format`: 图片格式（可选，如果不指定则从文件扩展名推断）
+
+#### `save_array`
+直接保存数组数据到文件
+
+**参数**:
+- `array_data`: 3D数组 [height, width, channels]
+- `file_path`: 保存的文件路径
+- `format`: 保存格式（"npy"或"json"），默认"npy"
+
+**示例**:
+```python
+# 保存数组数据
+array_data = processor.image_to_array(image_base64)
+# 保存为numpy格式（更高效）
+processor.save_array(array_data, "output/data.npy")
+# 或保存为JSON格式（可读性好）
+processor.save_array(array_data, "output/data.json", format="json")
+```
+
+#### `load_array`
+从文件加载数组数据
+
+**参数**:
+- `file_path`: 数组数据文件路径（.npy或.json）
+
+**示例**:
+```python
+# 从numpy格式加载
+array_data = processor.load_array("output/data.npy")
+# 或从JSON格式加载
+array_data = processor.load_array("output/data.json")
+```
+
 ### 使用场景
 
 1. 基本图片处理
@@ -314,6 +409,21 @@ large_array = create_large_image_array()
 ```python
 # 获取图片详细信息
 # 使用 get_image_info 工具查看宽度、高度、格式等
+```
+
+4. 数组数据存储
+```python
+# 将图片转换为数组并保存
+array_data = processor.image_to_array(image_base64)
+# 保存为numpy格式以提高效率
+processor.save_array(array_data, "arrays/image_data.npy")
+# 或保存为JSON格式以提高可读性
+processor.save_array(array_data, "arrays/image_data.json", format="json")
+
+# 之后加载数组数据
+array_data = processor.load_array("arrays/image_data.npy")
+# 处理或转换回图片
+image_base64 = processor.array_to_image(array_data)
 ```
 
 ### 配置说明
