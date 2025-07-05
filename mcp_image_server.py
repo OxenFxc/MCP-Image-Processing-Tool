@@ -27,7 +27,7 @@ async def handle_list_tools() -> List[types.Tool]:
     return [
         types.Tool(
             name="array_to_image",
-            description="将3D数组转换为base64编码的图片",
+            description="将3D数组转换为base64编码的图片，并可选择保存到文件",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -46,6 +46,11 @@ async def handle_list_tools() -> List[types.Tool]:
                         "type": "string",
                         "description": "图片格式 (PNG, JPEG, BMP等)",
                         "default": "PNG"
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": ["data"]
@@ -53,13 +58,18 @@ async def handle_list_tools() -> List[types.Tool]:
         ),
         types.Tool(
             name="image_to_array",
-            description="将base64编码的图片转换为3D数组",
+            description="将base64编码的图片转换为3D数组，并可选择保存为JSON文件",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "image_base64": {
                         "type": "string",
                         "description": "base64编码的图片字符串"
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的JSON文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": ["image_base64"]
@@ -67,7 +77,7 @@ async def handle_list_tools() -> List[types.Tool]:
         ),
         types.Tool(
             name="create_chunked_image",
-            description="创建分卷图片数据，用于处理大图片",
+            description="创建分卷图片数据，用于处理大图片，并可选择保存为JSON文件",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -91,6 +101,11 @@ async def handle_list_tools() -> List[types.Tool]:
                         "type": "integer",
                         "description": "分块大小（字节）",
                         "default": 1048576
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的JSON文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": ["data"]
@@ -98,7 +113,7 @@ async def handle_list_tools() -> List[types.Tool]:
         ),
         types.Tool(
             name="parse_chunked_image",
-            description="解析分卷图片数据，重组为完整图片数组",
+            description="解析分卷图片数据，重组为完整图片数组，并可选择保存为JSON文件",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -114,6 +129,11 @@ async def handle_list_tools() -> List[types.Tool]:
                             "format": {"type": "string"},
                             "data": {"type": "string"}
                         }
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的JSON文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": ["chunked_data"]
@@ -121,13 +141,18 @@ async def handle_list_tools() -> List[types.Tool]:
         ),
         types.Tool(
             name="get_image_info",
-            description="获取图片的基本信息",
+            description="获取图片的基本信息，并可选择保存为JSON文件",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "image_base64": {
                         "type": "string",
                         "description": "base64编码的图片字符串"
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的JSON文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": ["image_base64"]
@@ -135,7 +160,7 @@ async def handle_list_tools() -> List[types.Tool]:
         ),
         types.Tool(
             name="create_example_array",
-            description="创建示例数组，用于测试图片生成",
+            description="创建示例数组，用于测试图片生成，并可选择保存为JSON文件",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -164,6 +189,11 @@ async def handle_list_tools() -> List[types.Tool]:
                         "default": 3,
                         "minimum": 1,
                         "maximum": 4
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的JSON文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": []
@@ -171,13 +201,18 @@ async def handle_list_tools() -> List[types.Tool]:
         ),
         types.Tool(
             name="file_to_array",
-            description="从文件路径读取图片并转换为3D数组",
+            description="从文件路径读取图片并转换为3D数组，并可选择保存为JSON文件",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "file_path": {
                         "type": "string",
                         "description": "图片文件的路径（支持相对路径和绝对路径）"
+                    },
+                    "save_path": {
+                        "type": "string",
+                        "description": "保存的JSON文件路径（可选，如果不提供则不保存文件）",
+                        "default": None
                     }
                 },
                 "required": ["file_path"]
@@ -218,108 +253,108 @@ async def handle_call_tool(
         if name == "array_to_image":
             data = arguments["data"]
             format_type = arguments.get("format", "PNG")
+            save_path = arguments.get("save_path")
             
-            result = image_processor.array_to_image(data, format_type)
+            result = image_processor.array_to_image(data, format_type, save=bool(save_path), filename=save_path)
             
-            return [
-                types.TextContent(
-                    type="text",
-                    text=f"成功将数组转换为{format_type}格式的图片。\n"
-                         f"图片数据 (base64): {result[:100]}..."
-                )
-            ]
+            response_text = f"成功将数组转换为{format_type}格式的图片。\n"
+            if save_path:
+                response_text += f"图片已保存到: {save_path}\n"
+            response_text += f"图片数据 (base64): {result[:100]}..."
+            
+            return [types.TextContent(type="text", text=response_text)]
             
         elif name == "image_to_array":
             image_base64 = arguments["image_base64"]
+            save_path = arguments.get("save_path")
             
-            result = image_processor.image_to_array(image_base64)
+            result = image_processor.image_to_array(image_base64, save=bool(save_path), filename=save_path)
             
             # 获取数组信息
             import numpy as np
             np_array = np.array(result)
             
-            return [
-                types.TextContent(
-                    type="text",
-                    text=f"成功将图片转换为数组。\n"
-                         f"数组形状: {np_array.shape}\n"
-                         f"数值范围: {np_array.min()} - {np_array.max()}\n"
-                         f"数组数据: {json.dumps(result, indent=2)}"
-                )
-            ]
+            response_text = f"成功将图片转换为数组。\n"
+            if save_path:
+                response_text += f"数组已保存到: {save_path}\n"
+            response_text += f"数组形状: {np_array.shape}\n"
+            response_text += f"数值范围: {np_array.min()} - {np_array.max()}\n"
+            response_text += f"数组数据: {json.dumps(result, indent=2)}"
+            
+            return [types.TextContent(type="text", text=response_text)]
             
         elif name == "create_chunked_image":
             data = arguments["data"]
             format_type = arguments.get("format", "PNG")
             chunk_size = arguments.get("chunk_size", 1048576)
+            save_path = arguments.get("save_path")
             
             # 临时设置分块大小
             original_chunk_size = image_processor.chunk_size
             image_processor.chunk_size = chunk_size
             
             try:
-                result = image_processor.create_chunked_image(data, format_type)
+                result = image_processor.create_chunked_image(data, format_type, save=bool(save_path), filename=save_path)
             finally:
                 image_processor.chunk_size = original_chunk_size
             
+            response_text = ""
             if result["is_chunked"]:
-                return [
-                    types.TextContent(
-                        type="text",
-                        text=f"成功创建分卷图片数据。\n"
-                             f"原始形状: {result['original_shape']}\n"
-                             f"分块数量: {result['total_chunks']}\n"
-                             f"格式: {result['format']}\n"
-                             f"分卷数据: {json.dumps(result, indent=2)}"
-                    )
-                ]
+                response_text = f"成功创建分卷图片数据。\n"
+                if save_path:
+                    response_text += f"分卷数据已保存到: {save_path}\n"
+                response_text += f"原始形状: {result['original_shape']}\n"
+                response_text += f"分块数量: {result['total_chunks']}\n"
+                response_text += f"格式: {result['format']}\n"
+                response_text += f"分卷数据: {json.dumps(result, indent=2)}"
             else:
-                return [
-                    types.TextContent(
-                        type="text",
-                        text=f"图片较小，无需分卷。\n"
-                             f"原始形状: {result['original_shape']}\n"
-                             f"格式: {result['format']}\n"
-                             f"图片数据 (base64): {result['data'][:100]}..."
-                    )
-                ]
+                response_text = f"图片较小，无需分卷。\n"
+                if save_path:
+                    response_text += f"数据已保存到: {save_path}\n"
+                response_text += f"原始形状: {result['original_shape']}\n"
+                response_text += f"格式: {result['format']}\n"
+                response_text += f"图片数据 (base64): {result['data'][:100]}..."
+            
+            return [types.TextContent(type="text", text=response_text)]
                 
         elif name == "parse_chunked_image":
             chunked_data = arguments["chunked_data"]
+            save_path = arguments.get("save_path")
             
-            result = image_processor.parse_chunked_image(chunked_data)
+            result = image_processor.parse_chunked_image(chunked_data, save=bool(save_path), filename=save_path)
             
             # 获取数组信息
             import numpy as np
             np_array = np.array(result)
             
-            return [
-                types.TextContent(
-                    type="text",
-                    text=f"成功解析分卷图片数据。\n"
-                         f"重组后数组形状: {np_array.shape}\n"
-                         f"数值范围: {np_array.min()} - {np_array.max()}\n"
-                         f"数组数据: {json.dumps(result, indent=2)}"
-                )
-            ]
+            response_text = f"成功解析分卷图片数据。\n"
+            if save_path:
+                response_text += f"解析后的数组已保存到: {save_path}\n"
+            response_text += f"重组后数组形状: {np_array.shape}\n"
+            response_text += f"数值范围: {np_array.min()} - {np_array.max()}\n"
+            response_text += f"数组数据: {json.dumps(result, indent=2)}"
+            
+            return [types.TextContent(type="text", text=response_text)]
             
         elif name == "get_image_info":
             image_base64 = arguments["image_base64"]
+            save_path = arguments.get("save_path")
             
-            result = image_processor.get_image_info(image_base64)
+            result = image_processor.get_image_info(image_base64, save=bool(save_path), filename=save_path)
             
-            return [
-                types.TextContent(
-                    type="text",
-                    text=f"图片信息:\n{json.dumps(result, indent=2)}"
-                )
-            ]
+            response_text = f"图片信息:\n"
+            if save_path:
+                response_text += f"信息已保存到: {save_path}\n"
+            response_text += json.dumps(result, indent=2)
+            
+            return [types.TextContent(type="text", text=response_text)]
             
         elif name == "create_example_array":
             width = arguments.get("width", 100)
             height = arguments.get("height", 100)
             pattern = arguments.get("pattern", "gradient")
             channels = arguments.get("channels", 3)
+            save_path = arguments.get("save_path")
             
             # 创建示例数组
             import numpy as np
@@ -367,41 +402,51 @@ async def handle_call_tool(
             
             result = array.tolist()
             
-            return [
-                types.TextContent(
-                    type="text",
-                    text=f"成功创建示例数组。\n"
-                         f"尺寸: {width}x{height}\n"
-                         f"通道数: {channels}\n"
-                         f"图案: {pattern}\n"
-                         f"数组形状: {array.shape}\n"
-                         f"数组数据: {json.dumps(result, indent=2)}"
-                )
-            ]
+            # 如果需要保存
+            if save_path:
+                os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
+                with open(save_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        'data': result,
+                        'shape': list(array.shape),
+                        'pattern': pattern,
+                        'channels': channels
+                    }, f, indent=2, ensure_ascii=False)
+            
+            response_text = f"成功创建示例数组。\n"
+            if save_path:
+                response_text += f"数组已保存到: {save_path}\n"
+            response_text += f"尺寸: {width}x{height}\n"
+            response_text += f"通道数: {channels}\n"
+            response_text += f"图案: {pattern}\n"
+            response_text += f"数组形状: {array.shape}\n"
+            response_text += f"数组数据: {json.dumps(result, indent=2)}"
+            
+            return [types.TextContent(type="text", text=response_text)]
             
         elif name == "file_to_array":
             file_path = arguments["file_path"]
+            save_path = arguments.get("save_path")
             
             # 处理路径
             if not os.path.isabs(file_path):
                 file_path = os.path.abspath(file_path)
             
-            result = image_processor.file_to_array(file_path)
+            result = image_processor.file_to_array(file_path, save=bool(save_path), filename=save_path)
             
             # 获取数组信息
             import numpy as np
             np_array = np.array(result)
             
-            return [
-                types.TextContent(
-                    type="text",
-                    text=f"成功从文件读取并转换为数组。\n"
-                         f"文件路径: {file_path}\n"
-                         f"数组形状: {np_array.shape}\n"
-                         f"数值范围: {np_array.min()} - {np_array.max()}\n"
-                         f"数组数据: {json.dumps(result, indent=2)}"
-                )
-            ]
+            response_text = f"成功从文件读取并转换为数组。\n"
+            response_text += f"文件路径: {file_path}\n"
+            if save_path:
+                response_text += f"数组已保存到: {save_path}\n"
+            response_text += f"数组形状: {np_array.shape}\n"
+            response_text += f"数值范围: {np_array.min()} - {np_array.max()}\n"
+            response_text += f"数组数据: {json.dumps(result, indent=2)}"
+            
+            return [types.TextContent(type="text", text=response_text)]
             
         elif name == "save_base64_to_file":
             image_base64 = arguments["image_base64"]
